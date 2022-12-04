@@ -23,3 +23,41 @@ func TestMap(t *testing.T) {
 		assert.Equal(t, []int{197, 198, 199}, actual)
 	})
 }
+
+func TestFilter(t *testing.T) {
+	t.Run("string", func(t *testing.T) {
+		actual := Filter(func(t string) bool {
+			return len(t) > 2
+		}, []string{"yo", "hi", "hello", "bonjour"})
+		assert.Equal(t, []string{"hello", "bonjour"}, actual)
+	})
+	t.Run("int", func(t *testing.T) {
+		actual := Filter(func(t int) bool {
+			return t > 2
+		}, []int{0, 1, 2, 3, 4, 5, 0, -1, 20})
+		assert.Equal(t, []int{3, 4, 5, 20}, actual)
+	})
+}
+
+func TestToSet(t *testing.T) {
+	t.Run("string", func(t *testing.T) {
+		actual := ToSet([]string{"yo", "hi", "hello", "yo"})
+		assert.Equal(t, map[string]bool{
+			"yo":    true,
+			"hi":    true,
+			"hello": true,
+		}, actual)
+	})
+}
+
+func TestToList(t *testing.T) {
+	t.Run("string", func(t *testing.T) {
+		expected := []string{"yo", "hi", "hello"}
+		set := map[string]bool{
+			"yo":    true,
+			"hi":    true,
+			"hello": true,
+		}
+		assert.ElementsMatch(t, expected, ToList(set))
+	})
+}
