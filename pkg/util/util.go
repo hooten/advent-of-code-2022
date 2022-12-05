@@ -20,6 +20,14 @@ func Map[E any, T any](f func(E) T, xs []E) []T {
 	return ys
 }
 
+func Reduce[E any, T any](f func(T, E) T, xs []E, init T) T {
+	var acc = init
+	for _, x := range xs {
+		acc = f(acc, x)
+	}
+	return acc
+}
+
 func ToSet[T comparable](xs []T) map[T]bool {
 	m := map[T]bool{}
 	for _, x := range xs {

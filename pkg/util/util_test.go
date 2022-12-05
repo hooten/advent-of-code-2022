@@ -1,6 +1,9 @@
 package util
 
-import "testing"
+import (
+	"github.com/stretchr/testify/require"
+	"testing"
+)
 import "github.com/stretchr/testify/assert"
 
 func TestMap(t *testing.T) {
@@ -60,4 +63,11 @@ func TestToList(t *testing.T) {
 		}
 		assert.ElementsMatch(t, expected, ToList(set))
 	})
+}
+
+func TestReduce(t *testing.T) {
+	actual := Reduce(func(t int, s string) int {
+		return t + int(s[0])
+	}, []string{"a"}, 0)
+	require.Equal(t, 97, actual)
 }
