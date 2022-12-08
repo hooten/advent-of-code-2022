@@ -53,7 +53,7 @@ func TestToSet(t *testing.T) {
 	})
 }
 
-func TestToList(t *testing.T) {
+func TestKeys(t *testing.T) {
 	t.Run("string", func(t *testing.T) {
 		expected := []string{"yo", "hi", "hello"}
 		set := map[string]bool{
@@ -61,7 +61,7 @@ func TestToList(t *testing.T) {
 			"hi":    true,
 			"hello": true,
 		}
-		assert.ElementsMatch(t, expected, ToList(set))
+		assert.ElementsMatch(t, expected, Keys(set))
 	})
 }
 

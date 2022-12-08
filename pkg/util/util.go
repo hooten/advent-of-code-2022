@@ -36,12 +36,31 @@ func ToSet[T comparable](xs []T) map[T]bool {
 	return m
 }
 
-func ToList[T comparable](set map[T]bool) []T {
-	var xs []T
-	for elem := range set {
-		xs = append(xs, elem)
+func HasElem[T comparable](xs []T, elem T) bool {
+	for _, x := range xs {
+		if x == elem {
+			return true
+		}
 	}
-	return xs
+	return false
+}
+
+func HasKey[K comparable, V any](m map[K]V, key K) bool {
+	for mapKey := range m {
+		if mapKey == key {
+			return true
+		}
+	}
+	return false
+}
+
+func HasValue[K comparable, V comparable](m map[K]V, val V) bool {
+	for _, mapVal := range m {
+		if mapVal == val {
+			return true
+		}
+	}
+	return false
 }
 
 func Keys[K comparable, V any](m map[K]V) []K {
