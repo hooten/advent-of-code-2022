@@ -52,23 +52,18 @@ func newPair() *Pair {
 func main() {
 	lines := getFileContentsBy(newline, []string{empty, newline})
 	var xs []*Pair
-	knots := 2
+	knots := 10
 	for e := 0; e < knots; e++ {
 		xs = append(xs, newPair())
 	}
 	tailVisited := map[string]bool{
 		key(0, 0): true,
 	}
-	for i, line := range lines {
-		fmt.Sprintln(i)
-		//if i > 25 {
-		//	break
-		//}
+	for _, line := range lines {
 		re := regexp.MustCompile("([UDLR]) (.*)")
 		submatch := re.FindAllStringSubmatch(line, -1)
 		direction := submatch[0][1]
 		n, _ := strconv.Atoi(submatch[0][2])
-		fmt.Println(direction, n)
 		for i := 0; i < n; i++ {
 			switch direction {
 			case "U":
@@ -125,14 +120,8 @@ func main() {
 				if curr == knots-1 {
 					tailVisited[key(xs[curr].x, xs[curr].y)] = true
 				}
-
-				fmt.Println("position", "(", xs[prev].x, xs[prev].y, ")", "(", xs[curr].x, xs[curr].y, ")")
 			}
 		}
 	}
-	//pretty.Print(headVisited)
-	//pretty.Print(tailVisited)
-	fmt.Println(len(tailVisited))
+	fmt.Printf("with %d knots, the tail visited %d unique locations\n", knots, len(tailVisited))
 }
-
-// 10054 is too high
