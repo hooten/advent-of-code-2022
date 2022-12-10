@@ -1,5 +1,10 @@
 package util
 
+import (
+	"log"
+	"os"
+)
+
 func Filter[T any](f func(T) bool, xs []T) []T {
 	var ys []T
 	for _, x := range xs {
@@ -77,4 +82,12 @@ func Values[K comparable, V any](m map[K]V) []V {
 		xs = append(xs, val)
 	}
 	return xs
+}
+
+func MustReadFile(name string) string {
+	bytes, err := os.ReadFile(name)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(bytes)
 }
