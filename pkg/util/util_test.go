@@ -71,3 +71,9 @@ func TestReduce(t *testing.T) {
 	}, []string{"a"}, 0)
 	require.Equal(t, 97, actual)
 }
+
+func TestSplitByChar(t *testing.T) {
+	file := MustReadFile("./testdata/string.txt")
+	chars := SplitByChar(file)
+	assert.NotNil(t, chars)
+}

@@ -3,6 +3,8 @@ package util
 import (
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func Filter[T any](f func(T) bool, xs []T) []T {
@@ -90,4 +92,20 @@ func MustReadFile(name string) string {
 		log.Fatal(err)
 	}
 	return string(bytes)
+}
+
+func SplitByLine(file string) []string {
+	return strings.Split(file, "\n")
+}
+
+func SplitByChar(file string) []string {
+	return strings.Split(file, "")
+}
+
+func MustAtoi(s string) int64 {
+	atoi, err := strconv.ParseInt(s, 10, 0)
+	if err != nil {
+		log.Fatal(s, err)
+	}
+	return atoi
 }
