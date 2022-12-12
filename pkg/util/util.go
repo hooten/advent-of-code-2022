@@ -94,18 +94,37 @@ func MustReadFile(name string) string {
 	return string(bytes)
 }
 
+func SplitByBlock(file string) []string {
+	return splitBy(file, "\n\n")
+}
+
 func SplitByLine(file string) []string {
-	return strings.Split(file, "\n")
+	return splitBy(file, "\n")
 }
 
 func SplitByChar(file string) []string {
-	return strings.Split(file, "")
+	return splitBy(file, "")
 }
 
-func MustAtoi(s string) int64 {
+func splitBy(file string, sep string) []string {
+	raw := strings.Split(file, sep)
+	return Filter(func(s string) bool {
+		return s != "\n" && s != ""
+	}, raw)
+}
+
+func MustAtoi64(s string) int64 {
 	atoi, err := strconv.ParseInt(s, 10, 0)
 	if err != nil {
 		log.Fatal(s, err)
 	}
 	return atoi
+}
+
+func MustAtoi(s string) int {
+	atoi, err := strconv.ParseInt(s, 10, 0)
+	if err != nil {
+		log.Fatal(s, err)
+	}
+	return int(atoi)
 }

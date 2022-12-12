@@ -77,3 +77,10 @@ func TestSplitByChar(t *testing.T) {
 	chars := SplitByChar(file)
 	assert.NotNil(t, chars)
 }
+
+func TestSplitByBlocks(t *testing.T) {
+	file := MustReadFile("./testdata/multiline_regexp.txt")
+	blocks := SplitByBlock(file)
+	assert.NotNil(t, blocks)
+	assert.Len(t, blocks, 8)
+}

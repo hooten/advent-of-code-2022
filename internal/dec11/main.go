@@ -32,12 +32,12 @@ func main() {
 	for _, text := range monkeysText {
 		monkey := &Monkey{}
 		for _, line := range strings.Split(text, "\n") {
-			startingItems := util.RegexpMatch("Starting items: (.*)", line)
+			startingItems, _ := util.RegexpMatch("Starting items: (.*)", line)
 			if len(startingItems) > 0 {
 				xs := strings.Split(startingItems[1], ", ")
-				monkey.Items = util.Map(util.MustAtoi, xs)
+				monkey.Items = util.Map(util.MustAtoi64, xs)
 			}
-			ops := util.RegexpMatch("Operation: new = old (.) (.*)", line)
+			ops, _ := util.RegexpMatch("Operation: new = old (.) (.*)", line)
 			if len(ops) > 0 {
 				if len(ops) < 2 {
 					log.Fatal(line)
@@ -71,7 +71,7 @@ func main() {
 					return x
 				}
 			}
-			test := util.RegexpMatch("Test: divisible by (.*)", line)
+			test, _ := util.RegexpMatch("Test: divisible by (.*)", line)
 			if len(test) > 0 {
 				s := test[1]
 				atoi, err := strconv.ParseInt(s, 10, 0)
@@ -90,13 +90,13 @@ func main() {
 					return x%atoi == 0
 				}
 			}
-			iftrue := util.RegexpMatch("If true: throw to monkey (.*)", line)
+			iftrue, _ := util.RegexpMatch("If true: throw to monkey (.*)", line)
 			if len(iftrue) > 0 {
-				monkey.IFTrue = int(util.MustAtoi(iftrue[1]))
+				monkey.IFTrue = int(util.MustAtoi64(iftrue[1]))
 			}
-			iffalse := util.RegexpMatch("If false: throw to monkey (.*)", line)
+			iffalse, _ := util.RegexpMatch("If false: throw to monkey (.*)", line)
 			if len(iffalse) > 0 {
-				monkey.IFFalse = int(util.MustAtoi(iffalse[1]))
+				monkey.IFFalse = int(util.MustAtoi64(iffalse[1]))
 			}
 		}
 		monkeys = append(monkeys, monkey)

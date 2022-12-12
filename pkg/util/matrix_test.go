@@ -1,8 +1,7 @@
 package util
 
 import (
-	"log"
-	"strconv"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -11,14 +10,10 @@ func TestNewMatrix(t *testing.T) {
 	if file == "" {
 		t.Fatal("empty")
 	}
-	matrix := NewMatrixFromFile(file, "", func(s string) int {
-		atoi, err := strconv.Atoi(s)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return atoi
-	})
+	matrix := NewMatrixFromFile(file, "", MustAtoi)
 	if matrix == nil {
 		t.Fatal("nil")
 	}
+	require.Len(t, matrix, 99)
+	require.Len(t, matrix[0], 99)
 }

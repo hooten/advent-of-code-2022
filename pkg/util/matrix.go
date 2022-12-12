@@ -2,7 +2,21 @@ package util
 
 import "strings"
 
-func NewMatrix[T comparable](
+func NewMatrix(
+	lines []string,
+	sep string,
+) [][]string {
+	var matrix [][]string
+	for i, row := range lines {
+		matrix = append(matrix, []string{})
+		for _, cell := range strings.Split(row, sep) {
+			matrix[i] = append(matrix[i], cell)
+		}
+	}
+	return matrix
+}
+
+func NewMatrixWithMap[T comparable](
 	lines []string,
 	sep string,
 	f func(s string) T,
@@ -23,12 +37,6 @@ func NewMatrixFromFile[T comparable](
 	sep string,
 	f func(s string) T,
 ) [][]T {
-	rawLines := strings.Split(file, "\n")
-	lines := Filter(
-		func(s string) bool {
-			return !HasElem([]string{"\n", ""}, s)
-		},
-		rawLines,
-	)
-	return NewMatrix(lines, sep, f)
+	lines := SplitByLine(file)
+	return NewMatrixWithMap(lines, sep, f)
 }
