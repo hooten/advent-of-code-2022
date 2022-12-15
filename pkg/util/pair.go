@@ -18,7 +18,7 @@ func NewPair(x, y int) *Pair {
 }
 
 func NewPairFromKey(key string) (*Pair, error) {
-	match, ok := RegexpMatch("(-?\\d*), (-?\\d*)", key)
+	match, ok := RegexpMatch("(-?\\d*),\\s?(-?\\d*)", key)
 	if !ok {
 		return nil, fmt.Errorf("no match for %s", key)
 	}
