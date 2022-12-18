@@ -2,6 +2,7 @@ package util
 
 import (
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -23,6 +24,26 @@ func Map[E any, T any](f func(E) T, xs []E) []T {
 		elem := f(x)
 		ys = append(ys, elem)
 
+	}
+	return ys
+}
+
+func Take[T any](n int, xs []T) []T {
+	var ys []T
+	for i := 0; i < n; i++ {
+		if i >= len(xs) {
+			break
+		}
+		ys = append(ys, xs[i])
+	}
+	return ys
+}
+
+func FlatMap[E any, T any](f func(E) []T, xs []E) []T {
+	var ys []T
+	for _, x := range xs {
+		elem := f(x)
+		ys = append(ys, elem...)
 	}
 	return ys
 }
@@ -78,12 +99,43 @@ func Keys[K comparable, V any](m map[K]V) []K {
 	return xs
 }
 
+func SelectKeys[K comparable, V any](m map[K]V, keys []K) map[K]V {
+	set := ToSet(keys)
+	selected := map[K]V{}
+	for key, val := range m {
+		if _, contains := set[key]; contains {
+			selected[key] = val
+		}
+	}
+	return selected
+}
+
 func Values[K comparable, V any](m map[K]V) []V {
 	var xs []V
 	for _, val := range m {
 		xs = append(xs, val)
 	}
 	return xs
+}
+
+func InitializeMap[K comparable, V any](keys []K, initial V) map[K]V {
+	var m map[K]V
+	for _, key := range keys {
+		m[key] = initial
+	}
+	return m
+}
+
+func Min(m map[string]int) (string, int) {
+	finalK := ""
+	finalV := math.MaxInt
+	for k, v := range m {
+		if v < finalV {
+			finalV = v
+			finalK = k
+		}
+	}
+	return finalK, finalV
 }
 
 func MustReadFile(name string) string {
@@ -127,4 +179,11 @@ func MustAtoi(s string) int {
 		log.Fatal(s, err)
 	}
 	return int(atoi)
+}
+
+func Ternary[T any](ok bool, a T, b T) T {
+	if ok {
+		return a
+	}
+	return b
 }
