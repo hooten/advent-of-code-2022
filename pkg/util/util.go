@@ -23,7 +23,15 @@ func Map[E any, T any](f func(E) T, xs []E) []T {
 	for _, x := range xs {
 		elem := f(x)
 		ys = append(ys, elem)
+	}
+	return ys
+}
 
+func MapWithIndex[E any, T any](f func(E, int) T, xs []E) []T {
+	var ys []T
+	for i, x := range xs {
+		elem := f(x, i)
+		ys = append(ys, elem)
 	}
 	return ys
 }
