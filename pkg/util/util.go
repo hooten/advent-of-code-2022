@@ -2,11 +2,18 @@ package util
 
 import (
 	"log"
-	"math"
 	"os"
 	"strconv"
 	"strings"
 )
+
+func Concat[T any](lists ...[]T) []T {
+	var concatenated []T
+	for _, list := range lists {
+		concatenated = append(concatenated, list...)
+	}
+	return concatenated
+}
 
 func Filter[T any](f func(T) bool, xs []T) []T {
 	var ys []T
@@ -72,7 +79,7 @@ func ToSet[T comparable](xs []T) map[T]bool {
 	return m
 }
 
-func HasElem[T comparable](xs []T, elem T) bool {
+func Contains[T comparable](xs []T, elem T) bool {
 	for _, x := range xs {
 		if x == elem {
 			return true
@@ -107,6 +114,15 @@ func Keys[K comparable, V any](m map[K]V) []K {
 	return xs
 }
 
+func Assoc[K comparable, V any](m map[K]V, key K, val V) map[K]V {
+	n := map[K]V{}
+	for k, v := range m {
+		n[k] = v
+	}
+	n[key] = val
+	return n
+}
+
 func SelectKeys[K comparable, V any](m map[K]V, keys []K) map[K]V {
 	set := ToSet(keys)
 	selected := map[K]V{}
@@ -132,18 +148,6 @@ func InitializeMap[K comparable, V any](keys []K, initial V) map[K]V {
 		m[key] = initial
 	}
 	return m
-}
-
-func Min(m map[string]int) (string, int) {
-	finalK := ""
-	finalV := math.MaxInt
-	for k, v := range m {
-		if v < finalV {
-			finalV = v
-			finalK = k
-		}
-	}
-	return finalK, finalV
 }
 
 func MustReadFile(name string) string {

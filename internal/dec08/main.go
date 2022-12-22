@@ -23,7 +23,7 @@ func getFileContentsBy(sep string, omitLines []string) []string {
 	rawLines := strings.Split(fileBlob, sep)
 	return util.Filter(
 		func(s string) bool {
-			return !util.HasElem(omitLines, s)
+			return !util.Contains(omitLines, s)
 		},
 		rawLines,
 	)

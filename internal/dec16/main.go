@@ -3,31 +3,32 @@ package main
 import (
 	"fmt"
 	"github.com/RyanCarrier/dijkstra"
+	"github.com/ernestosuarez/itertools"
 	"github.com/hooten/advent-of-code-2022/pkg/util"
 	"log"
-	"sort"
 	"strings"
 )
 
 const Test = false
-const Debug = false
 
 func main() {
 	filename := getFilename(Test)
 	file := util.MustReadFile(filename)
 	lines := util.SplitByLine(file)
 
-	nodes := parse(lines)
-	keys := util.Keys(nodes)
-	sort.Slice(keys, func(i, j int) bool {
-		return nodes[keys[i]].FlowRate > nodes[keys[j]].FlowRate
-	})
+	nodes := parseNodes(lines)
+	allNodes := util.Reduce(func(m map[string]Node, node Node) map[string]Node {
+		return util.Assoc(m, node.Valve, node)
+	}, nodes, map[string]Node{})
 
-	shortestPaths := ShortestPaths(nodes)
-	a := util.SelectKeys(nodes, keys[:8])
+	shortestPaths := ShortestPaths(allNodes)
 
-	partOne(a, shortestPaths, Debug)
-	partTwo(Debug)
+	positiveFlowNodes := util.Filter(func(node Node) bool {
+		return node.Flow > 0
+	}, util.Values(allNodes))
+
+	//partOne(allNodes, positiveFlowNodes, shortestPaths)
+	partTwo(allNodes, shortestPaths, positiveFlowNodes)
 }
 
 func getFilename(test bool) string {
@@ -40,26 +41,24 @@ func getFilename(test bool) string {
 
 type Node struct {
 	Valve     string
-	FlowRate  int
+	Flow      int
 	Neighbors []string
 }
 
 func NewNode(Valve string, FlowRate int, Neighbors []string) Node {
 	return Node{
 		Valve:     Valve,
-		FlowRate:  FlowRate,
+		Flow:      FlowRate,
 		Neighbors: Neighbors,
 	}
 }
 
 func (n Node) String() string {
-	return fmt.Sprintf("Valve %s has flow rate=%d; tunnel lead to valve %s", n.Valve, n.FlowRate, strings.Join(n.Neighbors, ", "))
+	return fmt.Sprintf("Valve %s has flow rate=%d; tunnel lead to valve %s", n.Valve, n.Flow, strings.Join(n.Neighbors, ", "))
 }
 
-func parse(lines []string) map[string]Node {
-	var m = map[string]Node{}
-	for _, line := range lines {
-		normalizedLine := strings.Replace(strings.Replace(strings.Replace(line, "tunnels", "tunnel", -1), "leads", "lead", -1), "valves", "valve", -1)
+func parseNodes(lines []string) []Node {
+	return util.Map(func(line string) Node {
 		match, ok := util.RegexpMatch("Valve ([A-Z]{2}) has flow rate=(\\d+); tunnels? leads? to valves? (.*)", line)
 		if !ok {
 			log.Fatal("match ", line)
@@ -68,21 +67,45 @@ func parse(lines []string) map[string]Node {
 		flowRate := util.MustAtoi(match[2])
 		nodesStrs := strings.Split(match[3], ", ")
 		node := NewNode(valve, flowRate, nodesStrs)
+		normalizedLine := strings.Replace(strings.Replace(strings.Replace(line, "tunnels", "tunnel", -1), "leads", "lead", -1), "valves", "valve", -1)
 		if node.String() != normalizedLine {
 			log.Fatal("bad parsing. expected \"", normalizedLine, "\", got \"", node.String(), "\"")
 		}
-		m[valve] = node
-	}
-	return m
+		return node
+	}, lines)
 }
 
-func partOne(nodes map[string]Node, shortestPaths map[string]map[string]int, debug bool) {
+func partOne(allNodes map[string]Node, positiveFlowNodes []Node, shortestPaths map[string]map[string]int) {
 	fmt.Println("========== PART ONE ==========")
-	fmt.Println("========== PART END ==========")
-
+	max := MaxPressure(allNodes, positiveFlowNodes, shortestPaths, "AA", 30, 0, 0)
+	fmt.Println("max :", max)
+	fmt.Println("")
 }
 
-// possible : 2582 1720
+func MaxPressure(nodes map[string]Node, nodesRemaining []Node, paths map[string]map[string]int, currentPosition string, minutesRemaining int, currentFlow int, currentPressure int) int {
+	if minutesRemaining == 0 {
+		return currentPressure
+	}
+
+	availablePaths := util.Filter(func(nextNode Node) bool {
+		enoughMinutesRemain := minutesRemaining-paths[currentPosition][nextNode.Valve] >= 0
+		return enoughMinutesRemain
+	}, nodesRemaining)
+
+	possibleMaxes := util.Map(func(nextNode Node) int {
+		nextPosition := nextNode.Valve
+		nextNodesRemaining := util.Filter(func(node Node) bool {
+			return node.Valve != nextPosition
+		}, nodesRemaining)
+		moveCost := paths[currentPosition][nextPosition]
+		openAndMoveCost := 1 + moveCost
+		nextPressure := currentPressure + currentFlow*openAndMoveCost
+		nextFlow := currentFlow + nodes[nextPosition].Flow
+		nextTime := minutesRemaining - openAndMoveCost
+		return MaxPressure(nodes, nextNodesRemaining, paths, nextPosition, nextTime, nextFlow, nextPressure)
+	}, availablePaths)
+	return util.Max(util.Max(possibleMaxes...), currentPressure+currentFlow*minutesRemaining)
+}
 
 func ShortestPaths(nodes map[string]Node) map[string]map[string]int {
 	graph := dijkstra.NewGraph()
@@ -125,49 +148,30 @@ func ShortestPaths(nodes map[string]Node) map[string]map[string]int {
 	return shortestPaths
 }
 
-func partTwo(debug bool) {
+func partTwo(allNodes map[string]Node, shortestPaths map[string]map[string]int, positiveFlowNodes []Node) {
 	fmt.Println("========== PART TWO ==========")
+	allTunnels := util.Map(func(node Node) string {
+		return node.Valve
+	}, positiveFlowNodes)
 
-	fmt.Println("==========   END   ==========")
+	toNodes := func(xs []string) []Node {
+		return util.Map(func(s string) Node {
+			return allNodes[s]
+		}, xs)
+	}
+
+	possibleMaxes := util.Map(func(myShare int) int {
+		possibleMaxesForShare := util.Map(func(myTunnels []string) int {
+			elephantTunnels := util.Filter(func(s string) bool {
+				return !util.Contains(myTunnels, s)
+			}, allTunnels)
+			myMax := MaxPressure(allNodes, toNodes(myTunnels), shortestPaths, "AA", 26, 0, 0)
+			elephantMax := MaxPressure(allNodes, toNodes(elephantTunnels), shortestPaths, "AA", 26, 0, 0)
+			return myMax + elephantMax
+		}, util.Expand(itertools.CombinationsStr(allTunnels, myShare)))
+		return util.Max(possibleMaxesForShare...)
+	}, util.NewRange(1, len(positiveFlowNodes)/2))
+
+	fmt.Println("max :", util.Max(possibleMaxes...))
 	fmt.Println("")
 }
-
-/// 	iterator := itertools.PermutationsStr(toVisit, len(toVisit))
-//
-//	var maxPressure int // (answer is max)
-//	for permutation := range iterator {
-//		source := "AA"
-//		flow := 0
-//		pressure := 0
-//		minute := 0
-//		for _, destination := range permutation {
-//			moves := shortestPaths[source][destination]
-//			open := 1
-//			untilNextFlow := moves + open
-//			if debug {
-//				fmt.Print("(minutes = ", untilNextFlow, ", flow = ", flow, ") ")
-//			}
-//			pressureAdded := untilNextFlow * flow
-//			pressure += pressureAdded
-//
-//			flow += nodes[destination].FlowRate
-//			source = destination
-//			minute += untilNextFlow
-//			if minute >= 30 {
-//				break
-//			}
-//		}
-//		if minute < 30 {
-//			untilEnd := 30 - minute
-//			if debug {
-//				fmt.Print("(minutes = ", untilEnd, ", flow = ", flow, ") ")
-//			}
-//			pressure = pressure + untilEnd*flow
-//		}
-//		fmt.Println(permutation, pressure)
-//		if pressure > maxPressure {
-//			maxPressure = pressure
-//		}
-//	}
-//
-//	fmt.Println("max pressure :", maxPressure)
