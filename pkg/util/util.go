@@ -25,6 +25,15 @@ func Filter[T any](f func(T) bool, xs []T) []T {
 	return ys
 }
 
+func Find[T any](f func(T) bool, xs []T) (int, bool) {
+	for i, x := range xs {
+		if f(x) {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
 func Map[E any, T any](f func(E) T, xs []E) []T {
 	var ys []T
 	for _, x := range xs {

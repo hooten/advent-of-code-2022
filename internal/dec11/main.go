@@ -37,7 +37,7 @@ func main() {
 				xs := strings.Split(startingItems[1], ", ")
 				monkey.Items = util.Map(util.MustAtoi64, xs)
 			}
-			ops, _ := util.RegexpMatch("Operation: new = old (.) (.*)", line)
+			ops, _ := util.RegexpMatch("Operator: new = old (.) (.*)", line)
 			if len(ops) > 0 {
 				if len(ops) < 2 {
 					log.Fatal(line)

@@ -34,6 +34,16 @@ type LazyRange struct {
 	End   int
 }
 
+func (base LazyRange) Find(f func(int) bool) (int, bool) {
+	if base.Start > base.End {
+		return -1, false
+	}
+	if f(base.Start) {
+		return base.Start, true
+	}
+	return LazyRange{Start: base.Start + 1, End: base.End}.Find(f)
+}
+
 func NewLazyRange(start, end int) LazyRange {
 	if start > end {
 		log.Fatal("ordering invariant error, start=", start, " end=", end)

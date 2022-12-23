@@ -23,13 +23,13 @@ func TestRegexpMatch(t *testing.T) {
 func TestRegexpMatchMultiLine(t *testing.T) {
 	matches := RegexpMatchMultiLine(`Monkey (.*):
   Starting items: (.*)
-  Operation: new = old * (.*)
+  Operator: new = old * (.*)
   Test: divisible by (.*)
     If true: throw to monkey 6
     If false: throw to monkey 4
 `, `Monkey 0:
   Starting items: 65, 58, 93, 57, 66
-  Operation: new = old * 7
+  Operator: new = old * 7
   Test: divisible by 19
     If true: throw to monkey 6
     If false: throw to monkey 4

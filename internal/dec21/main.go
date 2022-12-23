@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hooten/advent-of-code-2022/pkg/util"
 	"log"
+	"math"
 )
 
 type Operation struct {
@@ -80,8 +81,25 @@ func main() {
 		map[string]*Monkey{},
 	)
 
-	rootSolutiono := Eval(monkeyMap, monkeyMap["root"])
-	fmt.Println(rootSolutiono)
+	rootSolution := Eval(monkeyMap, monkeyMap["root"])
+	fmt.Println(rootSolution)
+
+	searchHumn(monkeyMap)
+}
+
+func searchHumn(monkeyMap map[string]*Monkey) {
+	for j := int64(math.MinInt32); j <= int64(math.MaxInt32); j++ {
+		go func(i int64) {
+			newMap := util.Assoc(monkeyMap, "humn", &Monkey{Name: "humn", Number: i})
+			root := newMap["root"]
+			lhs := newMap[root.Operation.A]
+			rhs := newMap[root.Operation.B]
+			if Eval(newMap, lhs) == Eval(newMap, rhs) {
+				fmt.Println("part 2:", i)
+				return
+			}
+		}(j)
+	}
 }
 
 var Operations = map[string]func(int64, int64) int64{
