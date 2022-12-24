@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/hooten/advent-of-code-2022/pkg/util"
 	"log"
-	"math"
 )
 
 type Operation struct {
@@ -81,25 +80,50 @@ func main() {
 		map[string]*Monkey{},
 	)
 
-	rootSolution := Eval(monkeyMap, monkeyMap["root"])
-	fmt.Println(rootSolution)
+	root := monkeyMap["root"]
+	dissoc := util.Dissoc(monkeyMap, "root")
+	reducedMonkeyMap := util.Assoc(ReduceMonkeyMap(dissoc, util.Keys(dissoc)), "root", root)
 
-	searchHumn(monkeyMap)
+	part1Solution := Eval(reducedMonkeyMap, root)
+	fmt.Println("Part 1:", part1Solution)
+
+	FindHumn(reducedMonkeyMap, root)
+
 }
 
-func searchHumn(monkeyMap map[string]*Monkey) {
-	for j := int64(math.MinInt32); j <= int64(math.MaxInt32); j++ {
-		go func(i int64) {
-			newMap := util.Assoc(monkeyMap, "humn", &Monkey{Name: "humn", Number: i})
-			root := newMap["root"]
-			lhs := newMap[root.Operation.A]
-			rhs := newMap[root.Operation.B]
-			if Eval(newMap, lhs) == Eval(newMap, rhs) {
-				fmt.Println("part 2:", i)
-				return
-			}
-		}(j)
+func FindHumn(monkeyMap map[string]*Monkey, root *Monkey) (int, error) {
+	lhs := monkeyMap[root.Operation.A]
+	rhs := monkeyMap[root.Operation.B]
+
+	a, strA := EvalString(monkeyMap, lhs)
+	b, strB := EvalString(monkeyMap, rhs)
+	if strA == "" && strB == "" {
+		return 0, fmt.Errorf("something went wrong")
 	}
+	if strA != "" && strB == "" {
+		fmt.Println(strA, "==", b)
+	}
+	if strA == "" && strB != "" {
+		fmt.Println(a, "==", strB)
+	}
+
+	fmt.Println(strA, "==", strB)
+	return 0, nil
+
+}
+
+func ReduceMonkeyMap(m map[string]*Monkey, keys []string) map[string]*Monkey {
+	if len(keys) == 0 {
+		return m
+	}
+	key := keys[len(keys)-1]
+	newKeys := keys[:len(keys)-1]
+	value, err := EvalIgnoringHumn(util.Dissoc(m, key), m[key])
+	if err != nil {
+		return ReduceMonkeyMap(m, newKeys)
+	}
+	newM := util.Assoc(m, key, &Monkey{Name: key, Number: value})
+	return ReduceMonkeyMap(newM, newKeys)
 }
 
 var Operations = map[string]func(int64, int64) int64{
@@ -125,4 +149,49 @@ func Eval(monkeyMap map[string]*Monkey, monkey *Monkey) int64 {
 	b := monkey.Operation.B
 	f := Operations[monkey.Operation.Operator]
 	return f(Eval(monkeyMap, monkeyMap[a]), Eval(monkeyMap, monkeyMap[b]))
+}
+
+func EvalIgnoringHumn(monkeyMap map[string]*Monkey, monkey *Monkey) (int64, error) {
+	if monkey.Name == "humn" {
+		return 0, fmt.Errorf("cannot evaluate humn")
+	}
+	if monkey.Operation == nil {
+		return monkey.Number, nil
+	}
+	a := monkey.Operation.A
+	b := monkey.Operation.B
+	f := Operations[monkey.Operation.Operator]
+	evalA, err := EvalIgnoringHumn(monkeyMap, monkeyMap[a])
+	if err != nil {
+		return 0, err
+	}
+	evalB, err := EvalIgnoringHumn(monkeyMap, monkeyMap[b])
+	if err != nil {
+		return 0, err
+	}
+	return f(evalA, evalB), nil
+}
+
+func EvalString(monkeyMap map[string]*Monkey, monkey *Monkey) (int64, string) {
+	if monkey.Name == "humn" {
+		return 0, "X"
+	}
+	if monkey.Operation == nil {
+		return monkey.Number, ""
+	}
+	a := monkey.Operation.A
+	b := monkey.Operation.B
+	f := Operations[monkey.Operation.Operator]
+	evalA, strA := EvalString(monkeyMap, monkeyMap[a])
+	evalB, strB := EvalString(monkeyMap, monkeyMap[b])
+	if strA == "" && strB == "" {
+		return f(evalA, evalB), ""
+	}
+	if strA == "" && strB != "" {
+		return 0, fmt.Sprintf("(%d %s %s)", evalA, monkey.Operation.Operator, strB)
+	}
+	if strA != "" && strB == "" {
+		return 0, fmt.Sprintf("(%s %s %d)", strA, monkey.Operation.Operator, evalB)
+	}
+	return 0, fmt.Sprintf("(%s %s %s)", strA, monkey.Operation.Operator, strB)
 }

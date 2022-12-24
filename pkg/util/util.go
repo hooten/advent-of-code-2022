@@ -132,6 +132,18 @@ func Assoc[K comparable, V any](m map[K]V, key K, val V) map[K]V {
 	return n
 }
 
+func Dissoc[K comparable, V any](m map[K]V, keys ...K) map[K]V {
+	n := map[K]V{}
+	set := ToSet(keys)
+	for k, v := range m {
+		if set[k] {
+			continue
+		}
+		n[k] = v
+	}
+	return n
+}
+
 func SelectKeys[K comparable, V any](m map[K]V, keys []K) map[K]V {
 	set := ToSet(keys)
 	selected := map[K]V{}

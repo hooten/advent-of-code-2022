@@ -29,6 +29,21 @@ func NewRange[N constraints.Integer](start, end N) []N {
 	return ints
 }
 
+type LazyRange64 struct {
+	Start int64
+	End   int64
+}
+
+func (base LazyRange64) Find(f func(int64) bool) (int64, bool) {
+	if base.Start > base.End {
+		return -1, false
+	}
+	if f(base.Start) {
+		return base.Start, true
+	}
+	return LazyRange64{Start: base.Start + 1, End: base.End}.Find(f)
+}
+
 type LazyRange struct {
 	Start int
 	End   int
