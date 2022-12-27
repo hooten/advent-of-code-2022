@@ -220,3 +220,10 @@ func Ternary[T any](ok bool, a T, b T) T {
 	}
 	return b
 }
+
+func LazyTernary[T any](ok bool, f func() T, g func() T) T {
+	if ok {
+		return f()
+	}
+	return g()
+}

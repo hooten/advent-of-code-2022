@@ -87,29 +87,42 @@ func main() {
 	part1Solution := Eval(reducedMonkeyMap, root)
 	fmt.Println("Part 1:", part1Solution)
 
-	FindHumn(reducedMonkeyMap, root)
-
+	expr, err := FindHumn(reducedMonkeyMap, root)
+	if err != nil {
+		fmt.Println("Part 2:", err.Error())
+	} else {
+		fmt.Printf("Solve %s by hand\n", expr)
+		humn := int64(3353687996514)
+		fmt.Println("solution:", humn)
+		newM := util.Assoc(reducedMonkeyMap, "humn", &Monkey{Name: "humn", Number: humn})
+		equal := Eval(newM, newM[root.Operation.A]) == Eval(newM, newM[root.Operation.B])
+		if equal {
+			fmt.Println("Part 2:", humn)
+		} else {
+			fmt.Println("Part 2:", "failed")
+		}
+	}
 }
 
-func FindHumn(monkeyMap map[string]*Monkey, root *Monkey) (int, error) {
+// too high: 9476569668477
+
+func FindHumn(monkeyMap map[string]*Monkey, root *Monkey) (string, error) {
 	lhs := monkeyMap[root.Operation.A]
 	rhs := monkeyMap[root.Operation.B]
 
-	a, strA := EvalString(monkeyMap, lhs)
+	_, strA := EvalString(monkeyMap, lhs)
 	b, strB := EvalString(monkeyMap, rhs)
 	if strA == "" && strB == "" {
-		return 0, fmt.Errorf("something went wrong")
+		return "", fmt.Errorf("something went wrong, expected an X somewhere")
 	}
 	if strA != "" && strB == "" {
-		fmt.Println(strA, "==", b)
+		exxpr := fmt.Sprintf("%s==%d", strA, b)
+		return exxpr, nil
 	}
 	if strA == "" && strB != "" {
-		fmt.Println(a, "==", strB)
+		return "", fmt.Errorf("not yet implemented")
 	}
-
-	fmt.Println(strA, "==", strB)
-	return 0, nil
-
+	return "", fmt.Errorf("not yet implemented")
 }
 
 func ReduceMonkeyMap(m map[string]*Monkey, keys []string) map[string]*Monkey {
@@ -188,10 +201,10 @@ func EvalString(monkeyMap map[string]*Monkey, monkey *Monkey) (int64, string) {
 		return f(evalA, evalB), ""
 	}
 	if strA == "" && strB != "" {
-		return 0, fmt.Sprintf("(%d %s %s)", evalA, monkey.Operation.Operator, strB)
+		return 0, fmt.Sprintf("(%d%s%s)", evalA, monkey.Operation.Operator, strB)
 	}
 	if strA != "" && strB == "" {
-		return 0, fmt.Sprintf("(%s %s %d)", strA, monkey.Operation.Operator, evalB)
+		return 0, fmt.Sprintf("(%s%s%d)", strA, monkey.Operation.Operator, evalB)
 	}
-	return 0, fmt.Sprintf("(%s %s %s)", strA, monkey.Operation.Operator, strB)
+	return 0, fmt.Sprintf("(%s%s%s)", strA, monkey.Operation.Operator, strB)
 }
