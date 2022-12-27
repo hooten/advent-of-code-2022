@@ -6,8 +6,9 @@ import (
 )
 
 type Pair struct {
-	X int
-	Y int
+	X    int
+	Y    int
+	Cost int
 }
 
 func NewPair(x, y int) *Pair {
