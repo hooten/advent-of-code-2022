@@ -25,6 +25,16 @@ func Filter[T any](f func(T) bool, xs []T) []T {
 	return ys
 }
 
+func First[T any](f func(T) bool, xs []T) (int, T) {
+	for i, x := range xs {
+		if f(x) {
+			return i, x
+		}
+	}
+	var blank T
+	return -1, blank
+}
+
 func Find[T any](f func(T) bool, xs []T) (int, bool) {
 	for i, x := range xs {
 		if f(x) {
