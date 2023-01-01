@@ -35,6 +35,17 @@ func First[T any](f func(T) bool, xs []T) (int, T) {
 	return -1, blank
 }
 
+func Last[T any](f func(T) bool, xs []T) (int, T) {
+	for i := len(xs) - 1; i >= 0; i-- {
+		x := xs[i]
+		if f(x) {
+			return i, x
+		}
+	}
+	var blank T
+	return -1, blank
+}
+
 func Find[T any](f func(T) bool, xs []T) (int, bool) {
 	for i, x := range xs {
 		if f(x) {
@@ -82,10 +93,27 @@ func FlatMap[E any, T any](f func(E) []T, xs []E) []T {
 	return ys
 }
 
+func FlatMapWithIndex[E any, T any](f func(E, int) []T, xs []E) []T {
+	var ys []T
+	for i, x := range xs {
+		elem := f(x, i)
+		ys = append(ys, elem...)
+	}
+	return ys
+}
+
 func Reduce[E any, T any](f func(T, E) T, xs []E, init T) T {
 	var acc = init
 	for _, x := range xs {
 		acc = f(acc, x)
+	}
+	return acc
+}
+
+func ReduceWithIndex[E any, T any](f func(T, E, int) T, xs []E, init T) T {
+	var acc = init
+	for i, x := range xs {
+		acc = f(acc, x, i)
 	}
 	return acc
 }
