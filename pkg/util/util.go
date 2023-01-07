@@ -126,6 +126,16 @@ func ToSet[T comparable](xs []T) map[T]bool {
 	return m
 }
 
+func Intersection[T comparable](xs, ys map[T]bool) map[T]bool {
+	m := map[T]bool{}
+	for k := range xs {
+		if ys[k] {
+			m[k] = true
+		}
+	}
+	return m
+}
+
 func Contains[T comparable](xs []T, elem T) bool {
 	for _, x := range xs {
 		if x == elem {

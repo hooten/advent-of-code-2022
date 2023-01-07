@@ -5,89 +5,90 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"github.com/hooten/advent-of-code-2022/pkg/math"
+	"github.com/hooten/advent-of-code-2022/pkg/util"
 )
 
 func main() {
-	partTwo()
+	fmt.Printf("Part 1: Rucksack priority sum equals %d\n", rucksackPrioritySum())
+	fmt.Printf("Part 2: Elf Badge priority sum equals %d\n", elfBadgePrioritySum())
 }
 
-func partTwo() {
-	bytes, err := os.ReadFile("./internal/dec03/input.txt")
+func elfBadgePrioritySum() int64 {
+	bytes, err := os.ReadFile("./input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	priorities := 0
-	lines := strings.Split(string(bytes), "\n")
-	for len(lines) > 1 { // newline at the end of the file
-		elfGroup := lines[:3]
-		fmt.Println("elf group", elfGroup)
-		lines = lines[3:]
-		freqs := make(map[string]int)
-		for _, elf := range elfGroup {
-			set := toSet(elf)
-			for s := range set {
-				freqs[s]++
-			}
+	lines := util.Filter(func(line string) bool {
+		return line != ""
+	}, strings.Split(string(bytes), "\n"))
+	elfGroups := util.Reduce(func(groups [][]string, line string) [][]string {
+		last := groups[len(groups)-1]
+		if len(last) == 3 {
+			return append(groups, []string{line})
 		}
-		for s, n := range freqs {
-			if n == 3 {
-				if strings.ToLower(s) == s {
-					code := int(s[0]) - int('a') + 1
-					fmt.Println("common", s, code)
-					priorities += code
-				} else {
-					code := int(s[0]) - int('A') + 1 + 26
-					fmt.Println("common", s, code)
-					priorities += code
-				}
-			}
-		}
-	}
-	fmt.Println("priority", priorities)
+		return append(groups[:len(groups)-1], append(last, line))
+	}, lines, [][]string{[]string{}})
+	elfBadges := util.Map(func(group []string) string {
+		return Common(group)
+	}, elfGroups)
+	priorities := util.Map(Priority, elfBadges)
+	return math.Sum(priorities...)
 }
 
-// 1335 is too low
-// 22782 is too high
+type Rucksack struct {
+	First  string
+	Second string
+}
 
-func partOne() {
-	bytes, err := os.ReadFile("./internal/dec03/input.txt")
+func ParseRucksack(s string) Rucksack {
+	return Rucksack{
+		First:  (s[:len(s)/2]),
+		Second: (s[len(s)/2:]),
+	}
+}
+
+func Common(xs []string) string {
+	if len(xs) == 0 {
+		return ""
+	}
+	if len(xs) == 1 {
+		return xs[0]
+	}
+	firstSet := util.ToSet(strings.Split(xs[0], ""))
+	secondSet := util.ToSet(strings.Split(xs[1], ""))
+	intersection := util.Intersection(firstSet, secondSet)
+	common := strings.Join(util.Keys(intersection), "")
+	return Common(append([]string{common}, xs[2:]...))
+}
+
+func (r Rucksack) Common() string {
+	return Common([]string{r.First, r.Second})
+}
+
+func Priority(s string) int64 {
+	if len(s) != 1 {
+		log.Fatalf("expected %q to have length of 1", s)
+	}
+	if strings.ToLower(s) == s {
+		return int64(s[0]) - 96
+	}
+	return int64(s[0]) - 38
+}
+
+func rucksackPrioritySum() int64 {
+	bytes, err := os.ReadFile("./input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	priorities := 0
-	lines := strings.Split(string(bytes), "\n")
-	for _, line := range lines {
-		prefix := toSet(line[:len(line)/2])
-		suffix := toSet(line[len(line)/2:])
-		m := map[string]int{}
-		for s := range prefix {
-			m[s]++
-		}
-		for s := range suffix {
-			m[s]++
-		}
-		for s, n := range m {
-			if n == 2 {
-				if strings.ToLower(s) == s {
-					code := int(s[0]) - int('a') + 1
-					fmt.Println("common", s, code)
-					priorities += code
-				} else {
-					code := int(s[0]) - int('A') + 1 + 26
-					fmt.Println("common", s, code)
-					priorities += code
-				}
-			}
-		}
-	}
-	fmt.Println("priority", priorities)
-}
-
-func toSet(s string) map[string]bool {
-	as := strings.Split(s, "")
-	m := map[string]bool{}
-	for _, a := range as {
-		m[a] = true
-	}
-	return m
+	lines := util.Filter(func(line string) bool {
+		return line != ""
+	}, strings.Split(string(bytes), "\n"))
+	rucksacks := util.Map(ParseRucksack, lines)
+	priorities := util.Map(func(r Rucksack) int64 {
+		common := r.Common()
+		return Priority(common)
+	}, rucksacks)
+	return math.Sum(priorities...)
 }
