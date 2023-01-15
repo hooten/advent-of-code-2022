@@ -2,141 +2,155 @@ package main
 
 import (
 	"fmt"
-	"github.com/hooten/advent-of-code-2022/pkg/util"
-	"github.com/kr/pretty"
 	"log"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
+
+	"github.com/hooten/advent-of-code-2022/pkg/util"
 )
 
 func main() {
-	//partOne()
+	partOne()
 	partTwo()
 }
 
-func readFile() []string {
-	bytes, err := os.ReadFile("./internal/dec05/input.txt")
+func partOne() {
+	stacks, moves, err := parseFile("./input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-	rawLines := strings.Split(string(bytes), "\n")
-	return util.Filter(
-		func(s string) bool {
-			return s != ""
-		},
-		rawLines,
-	)
-}
-
-func partOne() {
-	matrix := [][]string{
-		{"R", "G", "J", "B", "T", "V", "Z"},
-		{"J", "R", "V", "L"},
-		{"S", "Q", "F"},
-		{"Z", "H", "N", "L", "F", "V", "Q", "G"},
-		{"R", "Q", "T", "J", "C", "S", "M", "W"},
-		{"S", "W", "T", "C", "H", "F"},
-		{"D", "Z", "C", "V", "F", "N", "J"},
-		{"L", "G", "Z", "D", "W", "R", "F", "Q"},
-		{"J", "B", "W", "V", "P"},
-	}
-	lines := util.Filter(
-		func(line string) bool {
-			return strings.HasPrefix(line, "move")
-		},
-		readFile(),
-	)
-	pretty.Print(matrix)
-	for _, line := range lines {
-		total := 0
-		fmt.Println(line)
-		re := regexp.MustCompile("move (\\d+) from (\\d+) to (\\d+)")
-		submatch := re.FindAllStringSubmatch(line, -1)
-		if len(submatch[0]) != 4 {
-			log.Fatal("bad match", submatch[0])
-		}
-		qty, _ := strconv.Atoi(submatch[0][1])
-		srcRaw, _ := strconv.Atoi(submatch[0][2])
-		src := srcRaw - 1
-		dstRaw, _ := strconv.Atoi(submatch[0][3])
-		dst := dstRaw - 1
-		fmt.Println(qty, src, dst)
-		for i := 0; i < qty; i++ {
-			index := len(matrix[src]) - 1
-			elem := matrix[src][index:][0]
-			matrix[src] = matrix[src][:index]
-			matrix[dst] = append(matrix[dst], elem)
-		}
-		pretty.Print(matrix)
-		for _, row := range matrix {
-
-			for i := 0; i < len(row); i++ {
-				total++
-			}
-		}
-		fmt.Println("total", total)
-	}
-	s := ""
-	for _, row := range matrix {
-		char := row[len(row)-1]
-		s = s + char
-	}
-	fmt.Println(s)
+	rearrangedStack := Rearrange(stacks, moves, false)
+	fmt.Printf("Part 1: The CrateMover 9000 makes the top crates: %s.\n", StackTops(rearrangedStack))
 }
 
 func partTwo() {
-	matrix := [][]string{
-		{"R", "G", "J", "B", "T", "V", "Z"},
-		{"J", "R", "V", "L"},
-		{"S", "Q", "F"},
-		{"Z", "H", "N", "L", "F", "V", "Q", "G"},
-		{"R", "Q", "T", "J", "C", "S", "M", "W"},
-		{"S", "W", "T", "C", "H", "F"},
-		{"D", "Z", "C", "V", "F", "N", "J"},
-		{"L", "G", "Z", "D", "W", "R", "F", "Q"},
-		{"J", "B", "W", "V", "P"},
+	stacks, moves, err := parseFile("./input.txt")
+	if err != nil {
+		log.Fatal(err)
 	}
-	lines := util.Filter(
-		func(line string) bool {
-			return strings.HasPrefix(line, "move")
-		},
-		readFile(),
-	)
-	pretty.Print(matrix)
-	for _, line := range lines {
-		total := 0
-		fmt.Println(line)
-		re := regexp.MustCompile("move (\\d+) from (\\d+) to (\\d+)")
-		submatch := re.FindAllStringSubmatch(line, -1)
-		if len(submatch[0]) != 4 {
-			log.Fatal("bad match", submatch[0])
-		}
-		qty, _ := strconv.Atoi(submatch[0][1])
-		srcRaw, _ := strconv.Atoi(submatch[0][2])
-		src := srcRaw - 1
-		dstRaw, _ := strconv.Atoi(submatch[0][3])
-		dst := dstRaw - 1
-		fmt.Println(qty, src, dst)
+	rearrangedQueue := Rearrange(stacks, moves, true)
+	fmt.Printf("Part 2: The CrateMover 9001 makes the top crates %s.\n", StackTops(rearrangedQueue))
+}
 
-		index := len(matrix[src]) - qty
-		elems := matrix[src][index:]
-		matrix[src] = matrix[src][:index]
-		matrix[dst] = append(matrix[dst], elems...)
-		pretty.Print(matrix)
-		for _, row := range matrix {
+func StackTops(stacks []Stack) string {
+	return util.Reduce(func(s string, stack Stack) string {
+		return s + stack.Peek()
+	}, stacks, "")
+}
 
-			for i := 0; i < len(row); i++ {
-				total++
+func Rearrange(stacks []Stack, moves []Move, queue bool) []Stack {
+	if len(moves) == 0 {
+		return stacks
+	}
+	move := moves[0]
+	newMoves := moves[1:]
+
+	if queue {
+		from := move.CrateSrc
+		to := move.CrateDst
+		newFrom, elems := stacks[from-1].Pop(move.N)
+		newTo := stacks[to-1].Append(elems...)
+		newStacks := make([]Stack, len(stacks))
+		copy(newStacks, stacks)
+		newStacks[from-1] = newFrom
+		newStacks[to-1] = newTo
+		return Rearrange(newStacks, newMoves, queue)
+	}
+	newStacks := util.Reduce(func(stacks []Stack, i int) []Stack {
+		from := move.CrateSrc
+		to := move.CrateDst
+		newFrom, elems := stacks[from-1].Pop(1)
+		newTo := stacks[to-1].Append(elems[0])
+		newStacks := make([]Stack, len(stacks))
+		copy(newStacks, stacks)
+		newStacks[from-1] = newFrom
+		newStacks[to-1] = newTo
+		return newStacks
+	}, util.NewRange(1, move.N), stacks)
+	return Rearrange(newStacks, newMoves, queue)
+}
+
+type Stack struct {
+	Crates []string
+}
+
+func (s Stack) Prepend(crate string) Stack {
+	return Stack{
+		Crates: append([]string{crate}, s.Crates...),
+	}
+}
+
+func (s Stack) Append(crates ...string) Stack {
+	return Stack{
+		Crates: append(s.Crates, crates...),
+	}
+}
+
+func (s Stack) Pop(n int) (Stack, []string) {
+	return Stack{
+		Crates: s.Crates[:len(s.Crates)-n],
+	}, s.Crates[len(s.Crates)-n:]
+}
+
+func (s Stack) Peek() string {
+	return s.Crates[len(s.Crates)-1]
+}
+
+func ParseStacks(lines []string) ([]Stack, error) {
+	width := len(lines[0])
+	n := (width + 1) / 4
+	return util.Reduce(func(stacks []Stack, line string) []Stack {
+		return util.MapWithIndex(func(stack Stack, i int) Stack {
+			x := i*4 + 1
+			crate := line[x : x+1]
+			if regexp.MustCompile("[A-Z]").MatchString(crate) {
+				return stack.Prepend(crate)
 			}
+			return stack
+		}, stacks)
+	}, lines, make([]Stack, n)), nil
+
+}
+
+type Move struct {
+	N        int
+	CrateSrc int
+	CrateDst int
+}
+
+func ParseMoves(lines []string) []Move {
+	re := regexp.MustCompile("move (\\d+) from (\\d+) to (\\d+)")
+	return util.Map(func(line string) Move {
+		matches := re.FindStringSubmatch(line)
+		if len(matches) != 4 {
+			log.Fatalf("expected 4 matches, got %v for line %q", matches, line)
 		}
-		fmt.Println("total", total)
+		return Move{
+			N:        util.MustAtoi(matches[1]),
+			CrateSrc: util.MustAtoi(matches[2]),
+			CrateDst: util.MustAtoi(matches[3]),
+		}
+	}, lines)
+}
+
+func parseFile(filename string) ([]Stack, []Move, error) {
+	bytes, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, nil, err
 	}
-	s := ""
-	for _, row := range matrix {
-		char := row[len(row)-1]
-		s = s + char
+	parts := strings.Split(string(bytes), "\n\n")
+	if len(parts) != 2 {
+		return nil, nil, fmt.Errorf("expected file to have 2 parts, got %d", len(parts))
 	}
-	fmt.Println(s)
+	firstPart := strings.Split(parts[0], "\n")
+	stacks, err := ParseStacks(firstPart)
+	if err != nil {
+		return nil, nil, err
+	}
+	secondPart := util.Filter(func(line string) bool {
+		return line != ""
+	}, strings.Split(parts[1], "\n"))
+	moves := ParseMoves(secondPart)
+	return stacks, moves, nil
 }
